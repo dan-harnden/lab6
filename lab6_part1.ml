@@ -68,7 +68,19 @@ tests.
 ************************************************************************
 ......................................................................*)
 
-type residence = NotImplemented ;;
+(*type residence = NotImplemented ;;*)
+
+type street =
+  | HighStreet
+  | Hauptstrasse
+  | RuePrincipale
+  | MainStreet ;;
+
+type address = { building : int; street : street; zip_code : string } ;;
+
+type residence =
+  | House of address
+  | Apartment of int * address ;;
 
 (* After implementing the residence type, compare it with our type
 definition at <https://url.cs51.io/lab6-1>. Consider the tradeoffs we
@@ -96,7 +108,15 @@ non-base-10 numbers. For example, `0x100` (hexadecimal) may or may not
 pass your test but `abcde` definitely should not.
 ......................................................................*)
 
-let valid_zip = fun _ -> failwith "valid_zip not implemented" ;;
+(*let valid_zip = fun _ -> failwith "valid_zip not implemented" ;;*)
+
+      # valid_zip "0___0" ;;
+      - : bool = false
+      # valid_zip "0x100" ;;
+      - : bool = false
+    let valid_zip (zip : string) : bool =
+      let pattern = Str.regexp "^[0-9][0-9][0-9][0-9][0-9]$" in
+      Str.string_match pattern zip 0 ;;
 
 (*......................................................................
 Exercise 3: Define a function `valid_residence` that enforces proper
@@ -105,8 +125,16 @@ zipcodes, and verifies that building and unit numbers are greater than
 otherwise.
 ......................................................................*)
 
-let valid_residence =
-  fun _ -> failwith "valid_residence not implemented" ;;
+(*let valid_residence =
+  fun _ -> failwith "valid_residence not implemented" ;;*)
+  
+let valid_residence (res : residence) : bool =
+  let valid_address ({building; zip_code; _} : address) : bool =
+    valid_zip zip_code && building > 0 in
+  match res with
+  | House addr -> valid_address addr
+  | Apartment (apt_unit, addr) -> valid_address addr && apt_unit > 0 ;;
+
 
 (*......................................................................
 Exercise 4: Time to get neighborly. Define a function `neighbors` that
@@ -118,8 +146,19 @@ Note: By this definition, a residence is considered to be its own
 neighbor.
 ......................................................................*)
 
+(*let neighbors (place1 : residence) (place2 : residence) : bool =
+  failwith "neighbors not implemented" ;;*)
+  
+let address_of_residence (r : residence) : address =
+  match r with
+  | House addr
+  | Apartment(_, addr) -> addr ;;
+
 let neighbors (place1 : residence) (place2 : residence) : bool =
-  failwith "neighbors not implemented" ;;
+  let addr1 = address_of_residence place1 in
+  let addr2 = address_of_residence place2 in
+  addr1.street = addr2.street && addr1.zip_code = addr2.zip_code ;;
+
 
 (*......................................................................
 Exercise 5: When buyers purchase a new residence in Camlville, they
@@ -135,10 +174,20 @@ has asked you to do the same by raising an `Invalid_argument`
 exception when appropriate.
 ......................................................................*)
 
+(*type town_record = { residence : residence; name : string } ;;*)
+
+(*let record_residence (res : residence) (name : string) : town_record =
+  failwith "record_residence not implemented" ;;)*)
+  
 type town_record = { residence : residence; name : string } ;;
 
-let record_residence (res : residence) (name : string) : town_record =
-  failwith "record_residence not implemented" ;;
+let record_residence (residence : residence)
+                     (name : string)
+                   : town_record =
+  if valid_residence residence then
+    { residence; name }
+  else
+    raise (Invalid_argument "record_residence: invalid residence") ;;  
 
 (*......................................................................
 Exercise 6: Neighbor search.
@@ -160,5 +209,19 @@ assume that no two town records have the same name.
 Hint: You may find the `List.find` function to be useful.
 ......................................................................*)
 
-let named_neighbors =
-  fun _ -> failwith "named_neighbors not implemented" ;;
+(*let named_neighbors =
+  fun _ -> failwith "named_neighbors not implemented" ;;*)
+  
+let named_neighbors (name1 : string)
+                    (name2 : string)
+                    (records : town_record list)
+                  : bool =
+
+  let find_residence_with_name name =
+    try
+      (List.find (fun record -> record.name = name) records).residence
+    with Not_found -> failwith "named_neighbors: name not found" in
+
+  neighbors (find_residence_with_name name1)
+            (find_residence_with_name name2) ;;
+
