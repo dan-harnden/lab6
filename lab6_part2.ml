@@ -30,22 +30,42 @@ consistent with it so that your further work in the lab will be
 consistent with our unit tests.
 ......................................................................*)
 
-type 'a bintree = NotImplemented ;;
+(*type 'a bintree = NotImplemented ;;*)
+
+type 'a bintree =
+  | Leaf
+  | Node of 'a * 'a bintree * 'a bintree ;;
+
+
 
 (*......................................................................
 Exercise 8: Define a function `leaf_count : 'a bintree -> int`, which
 returns the number of leaves in a binary tree.
 ......................................................................*)
 
-let leaf_count =
-  fun _ -> failwith "leaf_count not implemented" ;;
+(*let leaf_count =
+  fun _ -> failwith "leaf_count not implemented" ;;*)
+  
+let rec leaf_count (tree : 'a bintree) : int =
+  match tree with
+  | Leaf -> 1
+  | Node (_, left, right) -> leaf_count left + leaf_count right ;;  
+  
 
 (*......................................................................
 Exercise 9: Define a function `find`, such that `find tree value`
 returns `true` if `value` is stored at some node in `tree`, and `false`
 otherwise.
 ......................................................................*)
-let find = fun _ -> failwith "find not implemented" ;;
+(*let find = fun _ -> failwith "find not implemented" ;;*)
+
+let rec find (tree : 'a bintree) (value : 'a) : bool =
+  match tree with
+  | Leaf -> false
+  | Node (stored, left, right) ->
+     stored = value
+     || find left value
+     || find right value ;;
 
 (*......................................................................
 Exercise 10: Define a function `min_value`, such that `min_value tree`
@@ -55,8 +75,23 @@ the minimum, use the `<` operator for comparing values stored in the
 nodes of the tree.
 ......................................................................*)
 
-let min_value (tree : 'a bintree): 'a option =
-  failwith "min_value not implemented" ;;
+(*let min_value (tree : 'a bintree): 'a option =
+  failwith "min_value not implemented" ;;*)
+  
+  
+let rec min_value (tree : 'a bintree): 'a option =
+  let min_option (x : 'a option) (y : 'a option) : 'a option =
+    match x, y with
+    | None,       None        -> None
+    | None,       Some _right -> y
+    | Some _left, None        -> x
+    | Some  left, Some  right -> Some (min left right) in
+  match tree with
+  | Leaf -> None
+  | Node (value, left, right) ->
+     min_option (Some value)
+                (min_option (min_value left)
+                            (min_value right)) ;;  
 
 (*......................................................................
 Exercise 11: Define a function `map_tree`, such that `map_tree fn
@@ -66,5 +101,13 @@ tree. You'll want to think carefully about the type of `map_tree` to
 maximize its polymorphism.
 ......................................................................*)
 
-let map_tree =
-  fun _ -> failwith "map_tree not implemented" ;;
+(*let map_tree =
+  fun _ -> failwith "map_tree not implemented" ;;*)
+  
+let rec map_tree (fn : 'a -> 'b) (tree : 'a bintree) : 'b bintree =
+  match tree with
+  | Leaf -> Leaf
+  | Node (value, left, right) ->
+     Node (fn value,
+           map_tree fn left,
+           map_tree fn right) ;;  
